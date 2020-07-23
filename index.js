@@ -2,7 +2,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 
 const app = express();
-const PORT = process.env.port || 5000;
+const PORT = process.env.PORT || 5000;
 
 mongoose.connect("mongodb+srv://yjain_4:Yash@2017@cluster0.s5chr.gcp.mongodb.net/BlogApp?retryWrites=true&w=majority", {
     useNewUrlParser: true,
