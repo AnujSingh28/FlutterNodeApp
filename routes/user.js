@@ -1,10 +1,10 @@
 const express = require("express");
-const config = require("../config");
-const JWT = require("jsonwebtoken");
-const middleware = require("../middleware");
 const app = express();
 const User = require("../models/users.model");
-
+const UserData = require("../models/userdata.model");
+//const config = require("../config");
+//const JWT = require("jsonwebtoken");
+//const middleware = require("../middleware");
 const router = express.Router();
 
 router.route("/register").post((req,res)=>{
@@ -47,11 +47,11 @@ router.route("/login").post((req,res)=>{
             return res.status(403).json("Incorrect Username");
             if(result.password == req.body.password)
             {
-                var token = JWT.sign({username:req.body.username},config.key,{
-                    expiresIn: "24h"
-                });
+                //var token = JWT.sign({username:req.body.username},config.key,{
+                    //expiresIn: "24h"
+                //});
                 res.status(200).json({
-                    token: token,
+                    //token: token,
                     msg:"Successfully Logged In"
                 })
             }
@@ -62,7 +62,60 @@ router.route("/login").post((req,res)=>{
         });
 });
 
-router.route("/get/:username").get(middleware.checkToken,(req,res)=>{
+router.route("/data/:username").get((req,res)=>{
+    UserData.findOne(
+        {username: req.params.username},
+        (err,result) =>{
+            if(err)
+            return res.status(500).json({msg: err});
+            const msg = {
+                vehicles : result,
+                username : req.params.username
+            }
+            return res.json(msg);
+        });
+});
+
+router.route("/data/:username").patch((req,res)=>{
+    UserData.findOneAndUpdate(
+        {
+            username: req.params.username,
+        },
+        {$push : {vehicles : [{
+            vehicleName : req.body.vehicleName,
+            mileage : req.body.mileage,
+            tankCapacity : req.body.tankCapacity,
+            fuelType : req.body.fuelType
+        }]}},{new : true, upsert: true},
+        (err,result) =>{
+            if(err)
+            return res.status(500).json({msg: err});
+            const msg = {
+                msg : "Vehicle Added Successfully",
+                username : req.params.username
+            }
+            return res.json(msg);
+        });
+});
+
+router.route("/data/:username/:id").delete((req,res)=>{
+    UserData.findOneAndUpdate(
+        {
+            username: req.params.username,
+        },
+        {$pull : {vehicles:{_id :req.params.id}}},
+        (err,result) =>{
+            if(err)
+            return res.status(500).json({msg: err});
+            const msg = {
+                msg : "Vehicle Deleted Successfully",
+                username : req.params.username
+            }
+            return res.json(msg);
+        });
+});
+
+router.route("/get/:username").get((req,res)=>{
     User.findOne(
         {username: req.params.username},
         (err,result) =>{
@@ -76,7 +129,7 @@ router.route("/get/:username").get(middleware.checkToken,(req,res)=>{
         });
 });
 
-router.route("/update/:username").patch(middleware.checkToken,(req,res)=>{
+router.route("/update/:username").patch((req,res)=>{
     User.findOneAndUpdate(
         {username: req.params.username},
         {$set : {password : req.body.password}},
@@ -91,7 +144,7 @@ router.route("/update/:username").patch(middleware.checkToken,(req,res)=>{
         });
 });
 
-router.route("/delete/:username").delete(middleware.checkToken,(req,res)=>{
+router.route("/delete/:username").delete((req,res)=>{
     User.findOneAndDelete(
         {username: req.params.username},
         (err,result) =>{
